@@ -12,8 +12,14 @@ actor CoreDataStack {
 
     var context: NSManagedObjectContext
 
-    init(context: NSManagedObjectContext) {
-        self.context = context
+    init() {
+        let container = NSPersistentContainer(name: "Contact")
+        container.loadPersistentStores { _, error in
+            if let error = error {
+                fatalError("Failed to load Core Data stack: \(error)")
+            }
+        }
+        self.context = container.viewContext
     }
 }
 
@@ -30,6 +36,18 @@ extension CoreDataStack {
         }
     }
 
+    func createContact(newContact: ContactModel) async throws -> ContactModel {
+        let contact = ContactModel(context: context)
+        contact.firstName = newContact.firstName
+        contact.lastName = newContact.lastName
+        contact.phoneNumber = newContact.phoneNumber
+        contact.backgroundImage = newContact.backgroundImage
+        contact.id = UUID()
+
+        try await save() // Ensure errors propagate
+        return contact
+    }
+
     func save() async throws {
         do {
             if context.hasChanges {
@@ -41,15 +59,11 @@ extension CoreDataStack {
     }
 
     func deleteContact(contactID: UUID) async throws {
-        let contacts = try await fetch(ContactModel.self)
+        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = ContactModel.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", contactID as CVarArg)
 
-        do {
-            if let contactToDelete = contacts.first(where: { $0.id == contactID }) {
-                context.delete(contactToDelete)
-                try await save()
-            }
-        } catch {
-            print("Failed to delete contact: \(error.localizedDescription)")
-        }
+        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        try context.execute(deleteRequest)
+        try await save()
     }
 }
