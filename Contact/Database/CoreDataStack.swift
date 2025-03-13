@@ -30,17 +30,6 @@ extension CoreDataStack {
         }
     }
 
-    func createContact(newContact: ContactModel) async throws {
-        let contact = ContactModel(context: context)
-        contact.firstName = newContact.firstName
-        contact.lastName = newContact.lastName
-        contact.phoneNumber = newContact.phoneNumber
-        contact.imageData = newContact.imageData
-        contact.id = UUID()
-
-        try await save()
-    }
-
     func save() async throws {
         do {
             if context.hasChanges {

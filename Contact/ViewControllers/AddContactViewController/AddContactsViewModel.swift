@@ -35,9 +35,10 @@ extension AddContactsViewModel {
         contact.lastName = lastName
         contact.phoneNumber = phoneNumber
         contact.imageData = imageData
+        contact.id = UUID()
         contactToPass.send(contact)
         do {
-            try await coreDataStack.createContact(newContact: contact)
+            try await coreDataStack.save()
             isContactSaved = true
         } catch {
             isContactSaved = false

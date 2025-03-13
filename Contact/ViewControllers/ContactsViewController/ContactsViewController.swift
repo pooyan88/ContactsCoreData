@@ -155,4 +155,29 @@ extension ContactsViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         UITableView.automaticDimension
     }
+
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { [weak self] (_, _, completionHandler) in
+            guard let self = self else {
+                completionHandler(false)
+                return
+            }
+
+            Task {
+                await self.viewModel?.deleteContact(index: indexPath.row)
+
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+
+                    if indexPath.row < self.viewModel?.contacts.count ?? 0 {
+                        self.viewModel?.contacts.remove(at: indexPath.row)
+                        tableView.deleteRows(at: [indexPath], with: .automatic) 
+                        updatePageState(contacts: viewModel?.contacts)
+                    }
+                }
+            }
+            completionHandler(true)
+        }
+        return UISwipeActionsConfiguration(actions: [deleteAction])
+    }
 }

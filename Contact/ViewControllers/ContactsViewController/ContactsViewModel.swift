@@ -34,4 +34,17 @@ extension ContactsViewModel {
             print("Failed to get contacts")
         }
     }
+
+    @MainActor
+    func deleteContact(index: Int) async {
+        let contact = contacts[index]
+        guard let id = contact.id else { return }
+
+        do {
+            try await coreDataStack.deleteContact(contactID: id)
+            contacts.remove(at: index)
+        } catch {
+            print("Error deleting contact: \(error)")
+        }
+    }
 }
