@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 class ContactsViewController: BaseViewController {
 
@@ -15,12 +16,15 @@ class ContactsViewController: BaseViewController {
     @IBOutlet weak var descriptionLabel: UILabel!
     
     var pageState: PageState!
+    var viewModel: ContactsViewModel?
+    var cancellable = Set<AnyCancellable>()
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         setupViewModel()
         setupViews()
+        setupBindings()
     }
 }
 
@@ -28,7 +32,9 @@ class ContactsViewController: BaseViewController {
 extension ContactsViewController {
 
     private func setupViewModel() {
-
+        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+        let coreDataStack = CoreDataStack(context: context)
+        viewModel = ContactsViewModel(coreDataStack: coreDataStack)
     }
 
     private func setupViews() {
@@ -37,6 +43,9 @@ extension ContactsViewController {
     }
 
     private func setupTableView() {
+        contactsTableView.register(ContactTableViewCell.self)
+        contactsTableView.delegate = self
+        contactsTableView.dataSource = self
         contactsTableView.backgroundColor = .clear
         contactsTableView.backgroundView = pageState == .noContacts ? createNoContactsView() : nil
         contactsTableView.tableHeaderView = createTableHeaderView()
@@ -87,10 +96,48 @@ extension ContactsViewController {
     }
 }
 
+// MARK: - Bindings
+extension ContactsViewController {
+
+    private func setupBindings() {
+        bindTableViewReload()
+    }
+
+    private func bindTableViewReload() {
+        viewModel?.$contacts
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.contactsTableView.reloadData()
+            }
+            .store(in: &cancellable)
+    }
+}
+
 // MARK: - Actions
 extension ContactsViewController {
 
     @objc func barButtonDidTapped() {
-        print("tapped")
+        coordinator?.showAddContactViewController()
+    }
+}
+
+// MARK: - TableView Functions
+extension ContactsViewController: UITableViewDataSource, UITableViewDelegate {
+
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return viewModel?.contacts.count ?? 0
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: ContactTableViewCell.identifier, for: indexPath) as! ContactTableViewCell
+        let contact = viewModel?.contacts[indexPath.row]
+        let imageData = contact?.imageData ?? Data()
+        let config: ContactTableViewCell.Config = ContactTableViewCell.Config(imageData: imageData, firstName: contact?.firstName ?? "", lastName: contact?.lastName ?? "", phoneNumber: contact?.phoneNumber ?? "")
+        cell.setup(config: config)
+        return cell
+    }
+
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        UITableView.automaticDimension
     }
 }

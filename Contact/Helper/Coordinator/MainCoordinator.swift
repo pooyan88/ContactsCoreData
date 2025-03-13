@@ -16,7 +16,8 @@ final class MainCoordinator: Coordinator {
     }
 
     func startApp() {
-        let coreData = CoreDataStack()
+        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+        let coreData = CoreDataStack(context: context)
         Task { @MainActor in
             let contacts = try await coreData.fetch(ContactModel.self)
             let state: ContactsViewController.PageState = contacts.isEmpty ? .noContacts : .containsContracts
@@ -31,6 +32,13 @@ extension MainCoordinator {
     func showContactsViewController(pageState: ContactsViewController.PageState) {
         let vc = ContactsViewController.instantiate(for: .main)
         vc.pageState = pageState
+        vc.coordinator = self
+        navigationController.pushViewController(vc, animated: true)
+    }
+
+    func showAddContactViewController() {
+        let vc = AddContactViewController.instantiate(for: .main)
+        vc.coordinator = self
         navigationController.pushViewController(vc, animated: true)
     }
 }

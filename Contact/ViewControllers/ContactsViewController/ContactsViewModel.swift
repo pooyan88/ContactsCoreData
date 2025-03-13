@@ -6,7 +6,32 @@
 //
 
 import Foundation
+import UIKit
+import Combine
 
 final class ContactsViewModel {
+    @Published var contacts = [ContactModel]()
+    private var coreDataStack: CoreDataStack
+    @Published var isLoading: Bool = false
 
+    init(coreDataStack: CoreDataStack) {
+        self.coreDataStack = coreDataStack
+        Task { @MainActor in await getContacts()
+        }
+    }
+}
+
+// MARK: - Fetch
+extension ContactsViewModel {
+
+    private func getContacts() async {
+        isLoading = true
+        do {
+            contacts = try await coreDataStack.fetch(ContactModel.self)
+            isLoading = false
+        } catch {
+            isLoading = false
+            print("Failed to get contacts")
+        }
+    }
 }

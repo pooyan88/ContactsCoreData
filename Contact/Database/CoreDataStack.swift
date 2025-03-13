@@ -12,14 +12,8 @@ actor CoreDataStack {
 
     var context: NSManagedObjectContext
 
-    init() {
-        let container = NSPersistentContainer(name: "Contact")
-        container.loadPersistentStores { _, error in
-            if let error = error {
-                fatalError("Failed to load Core Data stack: \(error)")
-            }
-        }
-        self.context = container.viewContext
+    init(context: NSManagedObjectContext) {
+        self.context = context
     }
 }
 
@@ -36,16 +30,15 @@ extension CoreDataStack {
         }
     }
 
-    func createContact(newContact: ContactModel) async throws -> ContactModel {
+    func createContact(newContact: ContactModel) async throws {
         let contact = ContactModel(context: context)
         contact.firstName = newContact.firstName
         contact.lastName = newContact.lastName
         contact.phoneNumber = newContact.phoneNumber
-        contact.backgroundImage = newContact.backgroundImage
+        contact.imageData = newContact.imageData
         contact.id = UUID()
 
-        try await save() // Ensure errors propagate
-        return contact
+        try await save()
     }
 
     func save() async throws {
@@ -53,6 +46,7 @@ extension CoreDataStack {
             if context.hasChanges {
                 try context.save()
             }
+            print("Saved")
         } catch {
             print("Save error: \(error.localizedDescription)")
         }
