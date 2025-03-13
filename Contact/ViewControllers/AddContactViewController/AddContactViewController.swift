@@ -121,7 +121,7 @@ extension AddContactViewController {
 
     @objc private func saveContactTapped() {
         Task { @MainActor in
-           await viewModel?.saveContact()
+           await viewModel?.addContact()
         }
     }
 }

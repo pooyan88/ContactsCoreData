@@ -29,7 +29,7 @@ final class AddContactsViewModel: ObservableObject {
 // MARK: - Action
 extension AddContactsViewModel {
 
-    func saveContact() async {
+    func addContact() async {
         let contact = ContactModel(context: context)
         contact.firstName = firstName
         contact.lastName = lastName
