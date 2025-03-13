@@ -17,6 +17,7 @@ final class AddContactViewController: BaseViewController {
     
     var viewModel: AddContactsViewModel?
     var cancellable: Set<AnyCancellable> = []
+    var onContactAdded: ((ContactModel) -> Void)?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -92,11 +93,26 @@ extension AddContactViewController {
 extension AddContactViewController {
 
     private func setupBindings() {
+        bindSaveContact()
+        bindContactToPass()
+    }
+
+    private func bindSaveContact() {
         viewModel?.$isContactSaved.receive(on: DispatchQueue.main).sink(receiveValue: { [weak self] isContactSaved in
             if isContactSaved {
                 self?.navigationController?.popViewController(animated: true)
             }
         }).store(in: &cancellable)
+    }
+
+    private func bindContactToPass() {
+        viewModel?.contactToPass
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] newContact in
+                self?.onContactAdded?(newContact)
+                self?.navigationController?.popViewController(animated: true)
+            }
+            .store(in: &cancellable)
     }
 }
 

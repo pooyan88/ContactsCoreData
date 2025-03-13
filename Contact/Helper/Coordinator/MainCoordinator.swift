@@ -36,9 +36,10 @@ extension MainCoordinator {
         navigationController.pushViewController(vc, animated: true)
     }
 
-    func showAddContactViewController() {
+    func showAddContactViewController(onContactAdded: ((ContactModel) -> Void)?) {
         let vc = AddContactViewController.instantiate(for: .main)
         vc.coordinator = self
+        vc.onContactAdded = onContactAdded
         navigationController.pushViewController(vc, animated: true)
     }
 }

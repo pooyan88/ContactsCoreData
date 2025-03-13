@@ -18,6 +18,7 @@ final class AddContactsViewModel: ObservableObject {
     var context: NSManagedObjectContext
     var coreDataStack: CoreDataStack
     @Published var isContactSaved: Bool = false
+    var contactToPass = PassthroughSubject<ContactModel, Never>()
 
     init(context: NSManagedObjectContext) {
         self.context = context
@@ -34,6 +35,7 @@ extension AddContactsViewModel {
         contact.lastName = lastName
         contact.phoneNumber = phoneNumber
         contact.imageData = imageData
+        contactToPass.send(contact)
         do {
             try await coreDataStack.createContact(newContact: contact)
             isContactSaved = true

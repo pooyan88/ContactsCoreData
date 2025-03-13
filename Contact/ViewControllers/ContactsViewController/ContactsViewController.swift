@@ -23,8 +23,13 @@ class ContactsViewController: BaseViewController {
         super.viewDidLoad()
 
         setupViewModel()
-        setupViews()
         setupBindings()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+
+        setupViews()
     }
 }
 
@@ -117,7 +122,17 @@ extension ContactsViewController {
 extension ContactsViewController {
 
     @objc func barButtonDidTapped() {
-        coordinator?.showAddContactViewController()
+        coordinator?.showAddContactViewController(onContactAdded: { [weak self] newContact in
+            guard let self else { return }
+            viewModel?.contacts.append(newContact)
+            updatePageState(contacts: viewModel?.contacts)
+        })
+    }
+
+    func updatePageState(contacts: [ContactModel]?) {
+        if let contacts {
+            pageState = contacts.isEmpty ? .noContacts : .containsContracts
+        }
     }
 }
 
